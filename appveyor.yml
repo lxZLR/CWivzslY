@@ -1,0 +1,72 @@
+---
+version: 1.0.0-{build}
+
+skip_tags: true
+
+skip_commits:
+  files:
+    # git
+    - '.gitignore'
+    - '.gitmodules'
+    - '.github/**/*'
+
+    # docs
+    - '*.md'
+
+    # vagrant
+    - 'Vagrantfile'
+
+    # ansible config
+    - 'defaults/**/*'
+    - 'filter_plugins/**/*'
+    - 'inventories/**/*'
+    - 'library/**/*'
+
+    # ansible roles
+    - 'roles/*/files/**/*'
+    - 'roles/settings/**/*'
+    - 'roles/backup/**/*'
+    - 'roles/restore/**/*'
+
+    # ansible roles extras	
+    - 'roles/cloudflare/**/*'	
+    - 'roles/ddclient/**/*'	
+    - 'roles/feeder/**/*'	
+    - 'roles/mariadb/**/*'	
+    - 'roles/nginx/**/*'	
+    - 'roles/notify/**/*'	
+    - 'roles/nvidia/**/*'	
+    - 'roles/nzbthrottle/**/*'	
+    - 'roles/plex_auth_token/**/*'	
+    - 'roles/plex_dupefinder/**/*'	
+    - 'roles/plex_patrol/**/*'	
+    - 'roles/python-plexlibrary/**/*'	
+    - 'roles/resilio-sync/**/*'	
+    - 'roles/sickbeard_mp4_automator/**/*'	
+    - 'roles/subliminal/**/*'	
+    - 'roles/traktarr/**/*'	
+
+  message: /\[minor\]/
+
+build_cloud: CLOUDBOX
+image: Ubuntu1804
+
+matrix:
+  fast_finish: true
+
+# to disable automatic builds
+build: off
+
+init:
+  - sh: curl -s https://cloudbox.works/scripts/dep.sh | sudo -H sh
+
+install:
+  - sh: git submodule update --init --recursive
+  - sh: for i in defaults/*; do cp -n $i "$(basename "${i%.*}")"; done
+  - sh: curl -o daemon.json https://raw.githubusercontent.com/saltydk/AppveyorTest/main/daemon.json
+  - sh: cp -f daemon.json /home/appveyor/projects/cloudbox-taa7x/roles/docker/templates/daemon.json.j2
+  - sh: sudo ansible-playbook cloudbox.yml --syntax-check
+  - sh: |
+      sudo ansible-playbook cloudbox.yml --tags "cloudbox,emby,netdata,sabnzbd" \
+          --skip-tags "settings" \
+          --extra-vars '{"continuous_integration":true}'
