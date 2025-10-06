@@ -20,7 +20,7 @@ jobs:
     - name: Set git configs
       run: git config --global push.followTags true
     - name: Set up Python ${{matrix.python-version}}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v6
       with:
         python-version: '3.10.16'
         architecture: 'x64'
